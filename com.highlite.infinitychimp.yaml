@@ -1,0 +1,210 @@
+app-id: com.highlite.infinitychimp
+runtime: org.kde.Platform
+runtime-version: '6.10'
+sdk: org.kde.Sdk
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=pulseaudio
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=usb
+  - --filesystem=xdg-documents
+command: infinity_launcher
+
+modules:
+  - name: e2tools
+    buildsystem: simple
+    build-commands:
+      - ./configure
+      - make -j$(nproc)
+      - cp e2cp /app/
+    sources:
+      - type: archive
+        url: https://github.com/e2tools/e2tools/releases/download/v0.1.2/e2tools-0.1.2.tar.gz
+        sha256: b19593bbfc85e9c14c0d2bc8525887901c8fe02588c76df60ab843bf0573c4a2
+
+  - name: libforce_bcast_sendto_srcif
+    buildsystem: simple
+    build_commands:
+      - cc -shared -fPIC -ldl -o libforce_bcast_sendto_srcif.so force_bcast_sendto_srcif.c
+      - install -Dm644 libforce_bcast_sendto_srcif.so /app/lib/libforce_bcast_sendto_srcif.so
+    sources:
+      - type: file
+        path: force_bcast_sendto_srcif.c
+
+  - name: infinity-runtime
+    buildsystem: simple
+    sources:
+      - type: file
+        url: http://bretgeld.de/infinity/infinity_v2.34.swu
+        dest-filename: infinity.swu
+        sha256: f5806b4c6c0839c66bbb0d6d4be6101df66648fbcf1456a98e9cec1c96939ad7
+        only-arches:
+          - x86_64
+      - type: file
+        path: com.highlite.infinitychimp.desktop
+      - type: file
+        path: com.highlite.infinitychimp.nowing.desktop
+      - type: file
+        path: com.highlite.infinitychimp.factory_library_update.desktop
+    build-commands:
+      # Extract application, which is packed in initrd
+      - tar -xzf infinity.swu
+      - cp factory_library.tar.gz /app
+      - /app/e2cp flash.img:/boot/initramfs.cpio.gz initramfs.cpio.gz && rm /app/e2cp
+      - mkdir rootfs
+      - cd rootfs && gzip -dc ../initramfs.cpio.gz | cpio -idmv bin/* opt/* firmware/* usr/bin/xterm usr/lib/x86_64-linux-gnu/* lib/* usr/share/plymouth/themes/chimp_plymouth/spinner.png
+
+      # Install bins
+      - install -Dm755 rootfs/bin/Infinity_Client /app/bin/Infinity_Client
+      - install -Dm755 rootfs/bin/Infinity_Server /app/bin/Infinity_Server
+      - install -Dm755 rootfs/bin/InfinityUsbFirmwareUpdater /app/bin/InfinityUsbFirmwareUpdater
+
+      # Install firmware directory as-is
+      - install -d /firmware
+      - mv rootfs/firmware ${FLATPAK_DEST}
+
+      # Install helpers, easier to simply take em, rather than building
+      - install -Dm755 rootfs/bin/ping /app/bin/ping
+      - install -Dm755 rootfs/bin/ip /app/bin/ip
+      - install -Dm755 rootfs/bin/busybox /app/bin/busybox
+
+
+      # Libraries..
+      - install -d /app/lib
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_atomic.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_filesystem.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_prg_exec_monitor.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_program_options.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_serialization.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_system.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_unit_test_framework.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_wserialization.so.1.79.0 /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_atomic.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_filesystem.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_prg_exec_monitor.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_program_options.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_serialization.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_system.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_unit_test_framework.so /app/lib/
+      - install -m755 rootfs/opt/boost-1.79.0/lib/libboost_wserialization.so /app/lib/
+
+      - install -m755 rootfs/opt/lpsolve/liblpsolve55.so /app/lib/
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/libevdev.so.2 /app/lib/
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/libcrypto++.so.6 /app/lib/
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/librtmidi.so.4 /app/lib/
+
+      # for ip
+      - install -m755 rootfs/lib/x86_64-linux-gnu/libmnl.so.0 /app/lib/
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/libbsd.so.0 /app/lib/
+
+      # Launcher for Chimp Application including server
+      - |
+        cat > /app/bin/infinity_launcher << 'EOF'
+        #!/bin/sh
+
+        # Ensure our bundled libs are picked up
+        export LD_LIBRARY_PATH="/app/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+
+        if set|grep '^BCAST_IFACE=' >/dev/null; then
+          echo "BCAST_IFACE provided as environment variable. Not doing lookup. ($BCAST_IFACE)"
+        else
+          echo "BCAST_IFACE unset. Looking up based on artnet route."
+          iface=$(ip -o -4 route show table all scope link 2>/dev/null | awk '$1=="2.0.0.0/8"{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}')
+          if [ -n "$iface" ]; then
+            echo "Found interface with artnet route ($iface)"
+            export BCAST_IFACE=$iface
+          else
+            echo "Couldnt lookup iface with IP in 2.0.0.0/8. WARNING: Not pinning Artnet Interface"
+          fi
+        fi
+
+        SHOWDIR="$(xdg-user-dir DOCUMENTS)/Chimp/showdata"
+        FACLIBDIR="$(xdg-user-dir DOCUMENTS)/Chimp/factory_library"
+
+        # Docs/Chimp/showdata
+        mkdir -p "$SHOWDIR"
+        ln -s "$SHOWDIR" /showdata
+        
+        # Docs/Chimp/factory_library
+        mkdir -p "$FACLIBDIR"
+        ln -s "$FACLIBDIR" /library
+        
+
+        # Extract factory_library if not populated
+        if [ ! -f "$FACLIBDIR/factory_library.json" ]; then
+          echo "Factory Library not yet present. Extracting.."
+          echo "Extracting factory_library.tar.gz"
+          tar xzf /app/factory_library.tar.gz
+          rm -r $FACLIBDIR/* || true
+          mv library/* $FACLIBDIR
+        fi
+
+        ln -s /app/firmware /firmware
+
+        # Start Server
+        if set|grep '^BCAST_IFACE=' >/dev/null;then
+          echo "Starting Infinity Server with LD_PRELOAD_HACK"
+          LD_PRELOAD=/app/lib/libforce_bcast_sendto_srcif.so${LD_PRELOAD:+:$LD_PRELOAD} BCAST_IFACE="$BCAST_IFACE" /app/bin/Infinity_Server &
+          SERVER_PID=$!
+        else
+          echo "BCAST_IFACE unset. WARNING: Not binding Artnet Src Interface"
+          /app/bin/Infinity_Server &
+          SERVER_PID=$!
+        fi
+        trap "kill $SERVER_PID" SIGINT SIGTERM EXIT
+
+        # Let server start
+        sleep 1
+
+        # Start frontend
+        /app/bin/Infinity_Client $@
+        CLIENT_STATUS=$?
+
+        exit $CLIENT_STATUS
+        EOF
+      - chmod +x /app/bin/infinity_launcher
+
+        # Small script to update the factory library..
+      - |
+        cat > /app/bin/update_factory_library << 'EOF'
+        #!/bin/sh -e
+        
+        echo "Updating Fixtures..."
+        FACLIBDIR="$(xdg-user-dir DOCUMENTS)/Chimp/factory_library"
+
+        wget -q --progress=bar:force:noscroll "http://www.bretgeld.de/infinity/chimp/library/nightly_factory_library.faclib"
+        echo "Extracting update file"
+        tar xfz nightly_factory_library.faclib
+
+        echo "Checking Checksum.."
+        md5sum -c faclib.crc
+
+        echo "Extracting factory_library.tar.gz"
+        tar xzf factory_library.tar.gz
+ 
+        echo "Replacing factory_library with updated one"
+        mkdir -p $FACLIBDIR
+        rm -r $FACLIBDIR/* || true
+
+        mv library/* $FACLIBDIR
+        
+        echo "Success!"
+        echo "Enter to exit"
+        read
+        EOF
+      - chmod +x /app/bin/update_factory_library
+
+      # Provide Xterm, because there is no reliable way starting the update script in a terminal.
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/libXaw.so.7 /app/lib/
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/libXmu.so.6 /app/lib/
+      - install -m755 rootfs/usr/lib/x86_64-linux-gnu/libutempter.so.0 /app/lib/
+      - install -m755 rootfs/lib/x86_64-linux-gnu/libtinfo.so.6 /app/lib/
+      - install -m755 rootfs/usr/bin/xterm /app/bin/xterm
+
+      - install -Dm644 com.highlite.infinitychimp.desktop /app/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 com.highlite.infinitychimp.nowing.desktop /app/share/applications/${FLATPAK_ID}.nowing.desktop
+      - install -Dm644 com.highlite.infinitychimp.factory_library_update.desktop /app/share/applications/${FLATPAK_ID}.factory_library_update.desktop
+      - install -Dm644 rootfs/usr/share/plymouth/themes/chimp_plymouth/spinner.png /app/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.png

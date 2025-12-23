@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Infinity Chimp OnPC (No Virtual Wing)
+Comment=DMX Lighting Control Software
+Exec=/app/bin/infinity_launcher
+Icon=com.highlite.infinitychimp
+Categories=AudioVideo
