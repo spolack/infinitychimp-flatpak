@@ -1,10 +1,17 @@
-# Infinity Chimp 2.34 as flatpak
+# Infinity Chimp flatpak manifest
+
+Infinity Chimp consoles run a pretty recent Linux, so the binaries are ABI-compatible. I did the exercise of packaging it up as a Flatpak and its running nicely without any major issues. I already did a few gigs with it, and honestly it’s way more convenient than their OnPC version that comes as a VM.
+
+This repository contains an unofficial Flatpak manifest + wrapper scripts to run Infinity Chimp OnPC binaries on Linux with better desktop integration.
+* Not affiliated with or endorsed by Highlite.
+* No vendor binaries are stored in this repository. They are pulled upon build from the manufacturers update server.
+* Requires legitimate Infinity Chimp hardware/license to unlock output
 
 ### Install
 
 #### Build & Install flatpak
 ```
-git clone git@github.com:spolack/infinitychimp-flatpak.git
+git clone https://github.com/spolack/infinitychimp-flatpak.git
 cd infinitychimp-flatpak
 flatpak-builder --install --user --install-deps-from=flathub --force-clean builddir/ com.highlite.infinitychimp.yaml
 ```
