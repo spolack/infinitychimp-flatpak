@@ -3,5 +3,5 @@ Type=Application
 Name=Infinity Chimp OnPC
 Comment=DMX Lighting Control Software
 Exec=/app/bin/infinity_launcher -t onpc
-Icon=com.highlite.infinitychimp
+Icon=io.github.spolack.infinitychimp
 Categories=AudioVideo

@@ -1,4 +1,4 @@
-app-id: com.highlite.infinitychimp
+app-id: io.github.spolack.infinitychimp
 runtime: org.kde.Platform
 runtime-version: '6.10'
 sdk: org.kde.Sdk
@@ -43,11 +43,11 @@ modules:
         only-arches:
           - x86_64
       - type: file
-        path: com.highlite.infinitychimp.desktop
+        path: io.github.spolack.infinitychimp.desktop
       - type: file
-        path: com.highlite.infinitychimp.nowing.desktop
+        path: io.github.spolack.infinitychimp.nowing.desktop
       - type: file
-        path: com.highlite.infinitychimp.factory_library_update.desktop
+        path: io.github.spolack.infinitychimp.factory_library_update.desktop
     build-commands:
       # Extract application, which is packed in initrd
       - tar -xzf infinity.swu
@@ -204,7 +204,8 @@ modules:
       - install -m755 rootfs/lib/x86_64-linux-gnu/libtinfo.so.6 /app/lib/
       - install -m755 rootfs/usr/bin/xterm /app/bin/xterm
 
-      - install -Dm644 com.highlite.infinitychimp.desktop /app/share/applications/${FLATPAK_ID}.desktop
-      - install -Dm644 com.highlite.infinitychimp.nowing.desktop /app/share/applications/${FLATPAK_ID}.nowing.desktop
-      - install -Dm644 com.highlite.infinitychimp.factory_library_update.desktop /app/share/applications/${FLATPAK_ID}.factory_library_update.desktop
+      - install -Dm644 io.github.spolack.infinitychimp.desktop /app/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 io.github.spolack.infinitychimp.nowing.desktop /app/share/applications/${FLATPAK_ID}.nowing.desktop
+      - install -Dm644 io.github.spolack.infinitychimp.factory_library_update.desktop /app/share/applications/${FLATPAK_ID}.factory_library_update.desktop
+
       - install -Dm644 rootfs/usr/share/plymouth/themes/chimp_plymouth/spinner.png /app/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.png

@@ -13,7 +13,7 @@ This repository contains an unofficial Flatpak manifest + wrapper scripts to run
 ```
 git clone https://github.com/spolack/infinitychimp-flatpak.git
 cd infinitychimp-flatpak
-flatpak-builder --install --user --install-deps-from=flathub --force-clean builddir/ com.highlite.infinitychimp.yaml
+flatpak-builder --install --user --install-deps-from=flathub --force-clean builddir/ io.github.spolack.infinitychimp.yaml
 ```
 
 #### Add udev rules
@@ -38,6 +38,6 @@ The app doesn't natively allow interface selection for Art-Net.
 A workaround using LD_PRELOAD is inplace, which intercepts the sendto calls and redirects them to a interface provided BCAST_IFACE. If no environment variable is provided, the launcher script takes the interface with a IP in 2.0.0.0/8.
 
 ```
-flatpak run --env=BCAST_IFACE=eth0 com.highlite.infinitychimp # Set for a single run
-flatpak override --user --env=BCAST_IFACE=eth0 com.highlite.infinitychimp # Override permanently
+flatpak run --env=BCAST_IFACE=eth0 io.github.spolack.infinitychimp # Set for a single run
+flatpak override --user --env=BCAST_IFACE=eth0 io.github.spolack.infinitychimp # Override permanently
 ```

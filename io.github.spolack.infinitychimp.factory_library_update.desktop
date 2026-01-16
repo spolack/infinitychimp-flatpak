@@ -4,5 +4,5 @@ Name=Infinity Chimp Update Factory Library
 Comment=DMX Lighting Control Software
 Exec=/app/bin/xterm -e /app/bin/update_factory_library
 Terminal=false
-Icon=com.highlite.infinitychimp
+Icon=io.github.spolack.infinitychimp
 Categories=AudioVideo
